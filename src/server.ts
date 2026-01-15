@@ -1,95 +1,444 @@
-import express, { Request, Response } from "express";  
+import express, { NextFunction, Request, Response } from "express";  
 import {Pool} from "pg";
-import dotenv from "dotenv";
-import path from "path";
+import config from "./config";
+import mydb, { pool } from "./config/db";
+import logger from "./middleware/logger";
+import { UNSAFE_createClientRoutes } from "react-router-dom";
+import { userRoutes } from "./modules/users/user.routes";
 
-dotenv.config({ path: path.join(process.cwd(), ".env")});
  
-const app = express()
-const port = 5000
+
+ 
+const app = express();
+const port = config.port;
+ 
 app.use(express.json());
-const pool = new Pool
-({
-    connectionString: `${process.env.CONNECTION_STR}`
-})
-
-const mydb = async() =>
-{
-    await pool.query
-    (`
-      CREATE TABLE IF NOT EXISTS users
-      (
-         id SERIAL PRIMARY KEY,
-         name VARCHAR(100) NOT NULL,
-         email VARCHAR(200) UNIQUE NOT NULL
-         CHECK(email = LOWER(email)),
-         password VARCHAR(50) NOT NULL
-         CHECK(LENGTH(password) >= 6),
-         phone VARCHAR(20) NOT NULL,
-         role VARCHAR(50) NOT NULL
-         CHECK(role IN ('admin' , 'customer')),
-         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-         
-      )
-    `);
-
-
-
-     await pool.query
-    (`
-      CREATE TABLE IF NOT EXISTS Vehicles
-      (
-         id SERIAL PRIMARY KEY,
-         vehicle_name VARCHAR(100) NOT NULL,
-         type VARCHAR(50) NOT NULL
-         CHECK(type IN ('car', 'bike', 'van','SUV')),
-         registration_number VARCHAR(50) UNIQUE NOT NULL,
-         daily_rent_price INT  NOT NULL CHECK ( daily_rent_price > 0 ),
-         availability_status VARCHAR(10) NOT NULL 
-         CHECK(availability_status IN ('available' ,'booked')),
-         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-         
-      )
-    `);
-
-
-     await pool.query
-    (`
-      CREATE TABLE IF NOT EXISTS Bookings
-      (
-         id SERIAL PRIMARY KEY,
-         customer_id INT REFERENCES users(id) ON DELETE CASCADE,
-         vehicle_id INT REFERENCES  Vehicles(id) ON DELETE CASCADE,
-         rent_start_date DATE NOT NULL,
-         rent_end_date DATE NOT NULL CHECK (rent_end_date > rent_start_date) ,
-         total_price INT  NOT NULL CHECK ( total_price > 0 ),
-         status VARCHAR(10) NOT NULL 
-         CHECK( status IN ('active', 'cancelled', 'returned' )),
-
-         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-         
-      )
-    `);
-}
+ 
 
 mydb();
 
-app.get('/', (req:Request, res:Response) => {
+
+//logger middlewere
+
+ 
+
+app.get('/',logger, (req:Request, res:Response) => {
   res.send('Hello World!,My name is Toufique Hossain')
 })
 
-app.post('/', (req:Request, res:Response) => {
-  console.log(req.body);
 
-  res.status(201).json
-  ({
-    success: true,
-    message: " API is working",
-  })
+//users post
+app.use("/api/v1/auth/signup",userRoutes) 
+//single user get 
+app.get('/api/v1/auth/signup/:id',userRoutes )
+//users update
+app.put('/api/v1/auth/signup/:id',userRoutes )
+//users delete
+app.delete('/api/v1/auth/signup/:id',userRoutes )
+
+ //......................vehicles--crud..........................
+
+ //post vehicles
+app.post('/api/v1/vehicles', async (req:Request, res:Response) => {
+  const {vehicle_name,type,registration_number,daily_rent_price,availability_status} = req.body;
+
+  try
+  {
+       const result = await pool.query(
+        `INSERT INTO Vehicles (vehicle_name,type,registration_number,daily_rent_price,availability_status) VALUES($1,$2,$3,$4,$5) RETURNING *`,[vehicle_name,type,registration_number,daily_rent_price,availability_status]
+       );
+
+
+       res.status(201).json
+      ({
+        success:true,
+        message:"Vehicle created successfully",
+        data: result.rows[0]
+      })
+       
+  }
+  catch(error:any)
+  {
+      res.status(500).json
+      ({
+        success:false,
+        message:error.message
+      })
+  }
+
 })
+
+//get vehicles
+app.get('/api/v1/vehicles', async (req:Request, res:Response) => {
+ 
+  try
+  {
+      const result = await pool.query(`SELECT * FROM Vehicles`)  
+       res.status(201).json
+      ({
+        success:true,
+        message:"User found  successfully",
+        data: result.rows
+      })
+       
+  }
+  catch(error:any)
+  {
+      res.status(500).json
+      ({
+        success:false,
+        message:error.message
+      })
+  }
+
+})
+
+//get single vehicles
+app.get('/api/v1/vehicles/:id', async (req:Request, res:Response) => {
+ 
+  try
+  {
+      const result = await pool.query(`SELECT * FROM Vehicles WHERE id = $1`,[req.params.id]);
+      
+      if(result.rows.length ===0)
+      {
+        res.status(404).json
+      ({
+        success:false,
+        message: "Users Not Found"
+      })
+      }
+        
+      else
+      {
+        res.status(404).json
+      ({
+        success:true,
+        message: "Users Fetched Successfully",
+        data: result.rows[0]
+      })
+      }
+       
+  }
+  catch(error:any)
+  {
+      res.status(500).json
+      ({
+        success:false,
+        message:error.message
+      })
+  }
+
+})
+
+// update vehicles
+app.put('/api/v1/vehicles/:id', async (req:Request, res:Response) => {
+
+    const {vehicle_name,type,registration_number,daily_rent_price,availability_status} = req.body;
+ 
+  try
+  {
+      const result = await pool.query(`UPDATE Vehicles SET  vehicle_name=$1,  type=$2,  registration_number=$3,  daily_rent_price=$4,  availability_status=$5 WHERE id=$6 RETURNING * `,[vehicle_name,type,registration_number,daily_rent_price,availability_status,req.params.id]);
+      
+      if(result.rows.length ===0)
+      {
+        res.status(404).json
+      ({
+        success:false,
+        message: "Vehicles Not Found"
+      })
+      }
+        
+      else
+      {
+        res.status(200).json
+      ({
+        success:true,
+        message: "Vehicles updated Successfully",
+        data: result.rows[0]
+      })
+      }
+       
+  }
+  catch(error:any)
+  {
+      res.status(500).json
+      ({
+        success:false,
+        message:error.message
+      })
+  }
+
+})
+
+//delete a vehicles
+app.delete('/api/v1/vehicles/:id', async (req:Request, res:Response) => {
+ 
+  try
+  {
+      const result = await pool.query(`DELETE FROM Vehicles WHERE id = $1`,[req.params.id]);
+      
+      if(result.rowCount ===0)
+      {
+        res.status(404).json
+      ({
+        success:false,
+        message: "Vehicles Not Found"
+      })
+      }
+        
+      else
+      {
+        res.status(404).json
+      ({
+        success:true,
+        message: "Vehicles deleted Successfully",
+        data: null
+      })
+      }
+       
+  }
+  catch(error:any)
+  {
+      res.status(500).json
+      ({
+        success:false,
+        message:error.message
+      })
+  }
+
+})
+
+//....................Booking Crud ..............................
+//booking post
+app.post('/api/v1/bookings', async (req: Request, res: Response) => {
+  const { customer_id, vehicle_id, rent_start_date, rent_end_date, status } = req.body;
+
+  try {
+    const vehicleResult = await pool.query(
+      'SELECT daily_rent_price, availability_status FROM Vehicles WHERE id=$1',[vehicle_id]
+    );
+    if (vehicleResult.rows.length === 0) {
+      return res.status(400).json({ success: false,
+       message: "Vehicle did not found" });
+    }
+
+    const vehicle = vehicleResult.rows[0];
+    if (vehicle.availability_status === "booked") {
+      return res.status(400).json({ success: false, message: "Vehicle is booked now" });
+    }
+
+    const start = new Date(rent_start_date);
+    const end = new Date(rent_end_date);
+
+    if (end < start) {
+      return res.status(400).json({ success: false, message: "wrong input" });
+    }
+
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const total_price_calculated = vehicle.daily_rent_price * days; 
+    
+    const allowedStatuses = ['active', 'cancelled', 'returned'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ success: false,
+       message: " You entered wrong status" });
+    }
+
+    const bookingResult = await pool.query(
+      `INSERT INTO Bookings
+      (customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status)
+      VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [customer_id, vehicle_id, rent_start_date, rent_end_date, total_price_calculated, status]
+    );
+    await pool.query(`UPDATE Vehicles SET availability_status='booked' WHERE id=$1`, [vehicle_id]);
+
+    res.status(201).json({
+      success: true,
+      message: "Booking done",
+      data: bookingResult.rows[0]
+    });
+
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+//booking get 
+
+app.get('/api/v1/bookings', async (req:Request, res:Response) => {
+ 
+  try
+  {
+      const result = await pool.query(`SELECT * FROM Bookings`)  
+       res.status(201).json
+      ({
+        success:true,
+        message:"Booking found  successfully",
+        data: result.rows
+      })
+       
+  }
+  catch(error:any)
+  {
+      res.status(500).json
+      ({
+        success:false,
+        message:error.message
+      })
+  }
+
+})
+
+// single booking get
+
+app.get('/api/v1/bookings/:id', async (req:Request, res:Response) => {
+ 
+  try
+  {
+      const result = await pool.query(`SELECT * FROM  Bookings WHERE id = $1`,[req.params.id]);
+      
+      if(result.rows.length ===0)
+      {
+        res.status(404).json
+      ({
+        success:false,
+        message: "Booking Not Found"
+      })
+      }
+        
+      else
+      {
+        res.status(404).json
+      ({
+        success:true,
+        message: "Bookinh  Fetched Successfully",
+        data: result.rows[0]
+      })
+      }
+       
+  }
+  catch(error:any)
+  {
+      res.status(500).json
+      ({
+        success:false,
+        message:error.message
+      })
+  }
+
+})
+//booking update
+ // Booking Update (PUT)
+app.put('/api/v1/bookings/:id', async (req: Request, res: Response) => {
+  const { role, action } = req.body; // role = 'customer'|'admin'|'system', action='cancel'|'return'
+  const bookingId = req.params.id; // fix here
+
+  try {
+    // 1️⃣ Fetch the booking and vehicle info
+    const bookingResult = await pool.query(
+      `SELECT b.*, v.availability_status, v.id as vehicle_id 
+       FROM Bookings b 
+       JOIN Vehicles v ON b.vehicle_id = v.id 
+       WHERE b.id = $1`,
+      [bookingId]
+    );
+
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Booking not found" });
+    }
+
+    const booking = bookingResult.rows[0];
+    const today = new Date();
+    const rentStart = new Date(booking.rent_start_date);
+
+    // 2️⃣ Role-based logic
+    if (role === 'customer') {
+      // Customer can cancel only before start date
+      if (action !== 'cancel') {
+        return res.status(400).json({ success: false, message: "Customer can only cancel" });
+      }
+      if (today >= rentStart) {
+        return res.status(400).json({ success: false, message: "Cannot cancel after start date" });
+      }
+
+      // Update booking to cancelled
+      await pool.query(
+        `UPDATE Bookings SET status='cancelled', updated_at=CURRENT_TIMESTAMP WHERE id=$1`,
+        [bookingId]
+      );
+
+      // Make vehicle available again
+      await pool.query(
+        `UPDATE Vehicles SET availability_status='available' WHERE id=$1`,
+        [booking.vehicle_id]
+      );
+
+      return res.status(200).json({ success: true, message: "Booking cancelled successfully" });
+    } else if (role === 'admin') {
+      // Admin can mark as returned
+      if (action !== 'return') {
+        return res.status(400).json({ success: false, message: "Admin can only mark as returned" });
+      }
+
+      await pool.query(
+        `UPDATE Bookings SET status='returned', updated_at=CURRENT_TIMESTAMP WHERE id=$1`,
+        [bookingId]
+      );
+
+      // Update vehicle availability
+      await pool.query(
+        `UPDATE Vehicles SET availability_status='available' WHERE id=$1`,
+        [booking.vehicle_id]
+      );
+
+      return res.status(200).json({ success: true, message: "Booking marked as returned" });
+    } else if (role === 'system') {
+      // Auto return if period ended
+      const rentEnd = new Date(booking.rent_end_date);
+      if (today <= rentEnd) {
+        return res.status(400).json({ success: false, message: "Booking period not ended yet" });
+      }
+
+      await pool.query(
+        `UPDATE Bookings SET status='returned', updated_at=CURRENT_TIMESTAMP WHERE id=$1`,
+        [bookingId]
+      );
+
+      // Update vehicle availability
+      await pool.query(
+        `UPDATE Vehicles SET availability_status='available' WHERE id=$1`,
+        [booking.vehicle_id]
+      );
+
+      return res.status(200).json({ success: true, message: "Booking auto-marked as returned" });
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid role" });
+    }
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+//booking delete
+
+
+
+
+  
+
+
+
+app.use((req,res) =>
+{
+  res.status(404).json
+  ({
+    success: false,
+    message: " Route not found",
+    path:req.path,
+  });
+})
+
+
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
