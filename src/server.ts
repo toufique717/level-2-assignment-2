@@ -6,7 +6,7 @@ import logger from "./middleware/logger";
 import { UNSAFE_createClientRoutes } from "react-router-dom";
 import { userRoutes } from "./modules/users/user.routes";
 import { vehiclesRoutes } from "./modules/vehicles/vehicles.routes";
- 
+ import bookingRoutes from './modules/bookings/booking.routes';
 const app = express();
 const port = config.port;
  
@@ -42,57 +42,59 @@ app.delete('/api/v1/vehicles/:id',vehiclesRoutes)
 
 //....................Booking Crud ..............................
 //booking post
-app.post('/api/v1/bookings', async (req: Request, res: Response) => {
-  const { customer_id, vehicle_id, rent_start_date, rent_end_date, status } = req.body;
+// app.post('/api/v1/bookings', async (req: Request, res: Response) => {
+//   const { customer_id, vehicle_id, rent_start_date, rent_end_date, status } = req.body;
 
-  try {
-    const vehicleResult = await pool.query(
-      'SELECT daily_rent_price, availability_status FROM Vehicles WHERE id=$1',[vehicle_id]
-    );
-    if (vehicleResult.rows.length === 0) {
-      return res.status(400).json({ success: false,
-       message: "Vehicle did not found" });
-    }
+//   try {
+//     const vehicleResult = await pool.query(
+//       'SELECT daily_rent_price, availability_status FROM Vehicles WHERE id=$1',[vehicle_id]
+//     );
+//     if (vehicleResult.rows.length === 0) {
+//       return res.status(400).json({ success: false,
+//        message: "Vehicle did not found" });
+//     }
 
-    const vehicle = vehicleResult.rows[0];
-    if (vehicle.availability_status === "booked") {
-      return res.status(400).json({ success: false, message: "Vehicle is booked now" });
-    }
+//     const vehicle = vehicleResult.rows[0];
+//     if (vehicle.availability_status === "booked") {
+//       return res.status(400).json({ success: false, message: "Vehicle is booked now" });
+//     }
 
-    const start = new Date(rent_start_date);
-    const end = new Date(rent_end_date);
+//     const start = new Date(rent_start_date);
+//     const end = new Date(rent_end_date);
 
-    if (end < start) {
-      return res.status(400).json({ success: false, message: "wrong input" });
-    }
+//     if (end < start) {
+//       return res.status(400).json({ success: false, message: "wrong input" });
+//     }
 
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const total_price_calculated = vehicle.daily_rent_price * days; 
+//     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+//     const total_price_calculated = vehicle.daily_rent_price * days; 
     
-    const allowedStatuses = ['active', 'cancelled', 'returned'];
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ success: false,
-       message: " You entered wrong status" });
-    }
+//     const allowedStatuses = ['active', 'cancelled', 'returned'];
+//     if (!allowedStatuses.includes(status)) {
+//       return res.status(400).json({ success: false,
+//        message: " You entered wrong status" });
+//     }
 
-    const bookingResult = await pool.query(
-      `INSERT INTO Bookings
-      (customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status)
-      VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [customer_id, vehicle_id, rent_start_date, rent_end_date, total_price_calculated, status]
-    );
-    await pool.query(`UPDATE Vehicles SET availability_status='booked' WHERE id=$1`, [vehicle_id]);
+//     const bookingResult = await pool.query(
+//       `INSERT INTO Bookings
+//       (customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status)
+//       VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
+//       [customer_id, vehicle_id, rent_start_date, rent_end_date, total_price_calculated, status]
+//     );
+//     await pool.query(`UPDATE Vehicles SET availability_status='booked' WHERE id=$1`, [vehicle_id]);
 
-    res.status(201).json({
-      success: true,
-      message: "Booking done",
-      data: bookingResult.rows[0]
-    });
+//     res.status(201).json({
+//       success: true,
+//       message: "Booking done",
+//       data: bookingResult.rows[0]
+//     });
 
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+//   } catch (error: any) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// });
+ app.use(bookingRoutes);
+
 
 //booking get 
 
