@@ -42,124 +42,47 @@ app.delete('/api/v1/vehicles/:id',vehiclesRoutes)
 
 //....................Booking Crud ..............................
 //booking post
-// app.post('/api/v1/bookings', async (req: Request, res: Response) => {
-//   const { customer_id, vehicle_id, rent_start_date, rent_end_date, status } = req.body;
-
-//   try {
-//     const vehicleResult = await pool.query(
-//       'SELECT daily_rent_price, availability_status FROM Vehicles WHERE id=$1',[vehicle_id]
-//     );
-//     if (vehicleResult.rows.length === 0) {
-//       return res.status(400).json({ success: false,
-//        message: "Vehicle did not found" });
-//     }
-
-//     const vehicle = vehicleResult.rows[0];
-//     if (vehicle.availability_status === "booked") {
-//       return res.status(400).json({ success: false, message: "Vehicle is booked now" });
-//     }
-
-//     const start = new Date(rent_start_date);
-//     const end = new Date(rent_end_date);
-
-//     if (end < start) {
-//       return res.status(400).json({ success: false, message: "wrong input" });
-//     }
-
-//     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-//     const total_price_calculated = vehicle.daily_rent_price * days; 
-    
-//     const allowedStatuses = ['active', 'cancelled', 'returned'];
-//     if (!allowedStatuses.includes(status)) {
-//       return res.status(400).json({ success: false,
-//        message: " You entered wrong status" });
-//     }
-
-//     const bookingResult = await pool.query(
-//       `INSERT INTO Bookings
-//       (customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status)
-//       VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
-//       [customer_id, vehicle_id, rent_start_date, rent_end_date, total_price_calculated, status]
-//     );
-//     await pool.query(`UPDATE Vehicles SET availability_status='booked' WHERE id=$1`, [vehicle_id]);
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Booking done",
-//       data: bookingResult.rows[0]
-//     });
-
-//   } catch (error: any) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// });
- app.use(bookingRoutes);
-
-
+ app.use("/api/v1/bookings",bookingRoutes);
 //booking get 
-
-app.get('/api/v1/bookings', async (req:Request, res:Response) => {
- 
-  try
-  {
-      const result = await pool.query(`SELECT * FROM Bookings`)  
-       res.status(201).json
-      ({
-        success:true,
-        message:"Booking found  successfully",
-        data: result.rows
-      })
-       
-  }
-  catch(error:any)
-  {
-      res.status(500).json
-      ({
-        success:false,
-        message:error.message
-      })
-  }
-
-})
-
+app.get("api/v1/bookings",bookingRoutes)
 // single booking get
-
-app.get('/api/v1/bookings/:id', async (req:Request, res:Response) => {
+//app.get("/api/v1/bookings/:id",bookingRoutes)
+// app.get('/api/v1/bookings/:id', async (req:Request, res:Response) => {
  
-  try
-  {
-      const result = await pool.query(`SELECT * FROM  Bookings WHERE id = $1`,[req.params.id]);
+//   try
+//   {
+//       const result = await pool.query(`SELECT * FROM  Bookings WHERE id = $1`,[req.params.id]);
       
-      if(result.rows.length ===0)
-      {
-        res.status(404).json
-      ({
-        success:false,
-        message: "Booking Not Found"
-      })
-      }
+//       if(result.rows.length ===0)
+//       {
+//         res.status(404).json
+//       ({
+//         success:false,
+//         message: "Booking Not Found"
+//       })
+//       }
         
-      else
-      {
-        res.status(404).json
-      ({
-        success:true,
-        message: "Bookinh  Fetched Successfully",
-        data: result.rows[0]
-      })
-      }
+//       else
+//       {
+//         res.status(404).json
+//       ({
+//         success:true,
+//         message: "Bookinh  Fetched Successfully",
+//         data: result.rows[0]
+//       })
+//       }
        
-  }
-  catch(error:any)
-  {
-      res.status(500).json
-      ({
-        success:false,
-        message:error.message
-      })
-  }
+//   }
+//   catch(error:any)
+//   {
+//       res.status(500).json
+//       ({
+//         success:false,
+//         message:error.message
+//       })
+//   }
 
-})
+// })
 //booking update
  // Booking Update (PUT)
 app.put('/api/v1/bookings/:id', async (req: Request, res: Response) => {
