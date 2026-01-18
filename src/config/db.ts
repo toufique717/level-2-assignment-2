@@ -12,12 +12,12 @@ const mydb = async() =>
       CREATE TABLE IF NOT EXISTS  Users
       (
          id SERIAL PRIMARY KEY,
-         name VARCHAR(100) NOT NULL,
+         name VARCHAR(200) NOT NULL,
          email VARCHAR(200) UNIQUE NOT NULL
          CHECK(email = LOWER(email)),
-         password VARCHAR(50) NOT NULL
+         password VARCHAR(200) NOT NULL
          CHECK(LENGTH(password) >= 6),
-         phone VARCHAR(20) NOT NULL,
+         phone VARCHAR(30) NOT NULL,
          role VARCHAR(50) NOT NULL
          CHECK(role IN ('admin' , 'customer')),
          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

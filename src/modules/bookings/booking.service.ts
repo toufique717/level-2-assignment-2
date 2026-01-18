@@ -78,6 +78,8 @@ export const getSingleBooking = async (id: any) => {
   return result.rows[0];
 };
 
+
+
 export const deleteBooking = async (id: any) => {
   // 1️⃣ Check booking exists
   const bookingResult = await pool.query(
