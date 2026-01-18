@@ -1,26 +1,47 @@
 import { NextFunction, Request, Response } from "express"
-import jwt from "jsonwebtoken"
+import jwt, { JwtPayload } from "jsonwebtoken"
 import config from "../config";
 
-const auth = () =>
+const auth = (...roles : string[]) =>
 {
-    return(req:Request, res:Response,next: NextFunction) =>
+    return async (req:Request, res:Response,next: NextFunction) =>
     {
-        const token = req.headers.authorization;
+        try{
+
+             const token = req.headers.authorization;
 
         if(!token)
         {
             return res.status(500).json({message: "you are not Auythorized"});
         }
 
-        const decoded = jwt.verify(token,config.jwtsecret as string);
+        const decoded = jwt.verify(token,config.jwtsecret as string) as JwtPayload;
         console.log({decoded});
+        req.user = decoded ;
+
+        if(roles.length && !roles.includes(decoded.role as string))
+        {
+            return res.status(500).json({
+                error:"unauthorized"
+            });
+        }
+
        // console.log({authtoken:token});
        return next();
+
+        }
+
+        catch(err:any)
+        {
+           res.status(500).json({
+            success:false,
+            message:err.message,
+           })
+        }
     };
 };
 
 export default auth;
 
 
- 
+  
