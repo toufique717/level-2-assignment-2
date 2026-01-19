@@ -13,7 +13,7 @@ const loginuser = async (req:Request,res: Response) =>
            res.status(200).json
           ({
             success:true,
-            message:"User registered successfully",
+            message:"User logged in  successfully",
             data: result
           })
            
