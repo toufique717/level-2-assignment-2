@@ -37,9 +37,9 @@ const createBooking = async (req: Request, res: Response) => {
 
  const getSingleBooking = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { bookingId } = req.params;
 
-    const booking = await bookingService.getSingleBooking(id);
+    const booking = await bookingService.getSingleBooking(bookingId);
 
     res.status(200).json({
       success: true,
@@ -56,9 +56,9 @@ const createBooking = async (req: Request, res: Response) => {
 
 const deleteBooking = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { bookingId } = req.params;
 
-    await bookingService.deleteBooking(id);
+    await bookingService.deleteBooking(bookingId);
 
     res.status(200).json({
       success: true,
@@ -74,9 +74,9 @@ const deleteBooking = async (req: Request, res: Response) => {
 
 const updateBooking = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { bookingId } = req.params;
 
-    const result = await bookingService.updateBooking(id, req.body);
+    const result = await bookingService.updateBooking(bookingId, req.body);
 
     res.status(200).json({
       success: true,
@@ -89,8 +89,6 @@ const updateBooking = async (req: Request, res: Response) => {
     });
   }
 };
-
-
 
 export const vehiclescontrollers = 
 {

@@ -26,7 +26,6 @@ const auth = (...roles : string[]) =>
             });
         }
 
-       // console.log({authtoken:token});
        return next();
 
         }
@@ -44,4 +43,3 @@ const auth = (...roles : string[]) =>
 export default auth;
 
 
-  

@@ -1,16 +1,16 @@
 import express, { Request, Response } from "express";
-import { vehicleservice } from "./vehicles.service";
 import { vehiclestrollers } from "./vehicles.controller";
+import auth from "../../middleware/auth";
 
 
 const router = express.Router();
 
 
-router.post("/",vehiclestrollers.createvehicles)
+router.post("/",auth("admin"),vehiclestrollers.createvehicles)
 router.get("/",vehiclestrollers.getvehicles)
-router.get("/:id",vehiclestrollers.getsinglevehicles)
-router.put("/:id",vehiclestrollers.updatevehicles)
-router.delete("/:id",vehiclestrollers.deletevehicles)
+router.get("/:vehicleId",vehiclestrollers.getsinglevehicles)
+router.put("/:vehicleId",auth("admin"),vehiclestrollers.updatevehicles)
+router.delete("/:vehicleId",auth("admin"),vehiclestrollers.deletevehicles)
 
 
 export const vehiclesRoutes = router;

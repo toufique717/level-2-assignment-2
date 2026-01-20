@@ -64,11 +64,10 @@ export const getAllBookings = async () => {
   return result.rows;
 };
 
-
-export const getSingleBooking = async (id: any) => {
+export const getSingleBooking = async (bookingId: any) => {
   const result = await pool.query(
     `SELECT * FROM Bookings WHERE id = $1`,
-    [id]
+    [bookingId]
   );
 
   if (result.rows.length === 0) {
@@ -78,13 +77,11 @@ export const getSingleBooking = async (id: any) => {
   return result.rows[0];
 };
 
-
-
-export const deleteBooking = async (id: any) => {
-  // 1️⃣ Check booking exists
+export const deleteBooking = async (bookingId: any) => {
+  
   const bookingResult = await pool.query(
     `SELECT vehicle_id FROM Bookings WHERE id = $1`,
-    [id]
+    [bookingId]
   );
 
   if (bookingResult.rows.length === 0) {
@@ -93,13 +90,11 @@ export const deleteBooking = async (id: any) => {
 
   const vehicleId = bookingResult.rows[0].vehicle_id;
 
-  // 2️⃣ Delete booking
   await pool.query(
     `DELETE FROM Bookings WHERE id = $1`,
-    [id]
+    [bookingId]
   );
 
-  // 3️⃣ Make vehicle available again
   await pool.query(
     `UPDATE Vehicles SET availability_status = 'available' WHERE id = $1`,
     [vehicleId]
@@ -111,7 +106,7 @@ export const deleteBooking = async (id: any) => {
 export const updateBooking = async (id: any, data: any) => {
   const { role, action } = data;
 
-  // Fetch booking with vehicle info
+  
   const bookingResult = await pool.query(
     `SELECT b.*, v.id AS vehicle_id
      FROM Bookings b
@@ -129,7 +124,7 @@ export const updateBooking = async (id: any, data: any) => {
   const rentStart = new Date(booking.rent_start_date);
   const rentEnd = new Date(booking.rent_end_date);
 
-  // Generic function to update booking and vehicle status
+  
   const updateStatus = async (bookingStatus: string, vehicleStatus: string) => {
     await pool.query(
       `UPDATE Bookings SET status=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2`,
@@ -142,7 +137,6 @@ export const updateBooking = async (id: any, data: any) => {
     );
   };
 
-  // Role-based actions
   const roleActions: Record<string, (action: string) => Promise<any>> = {
     customer: async (action) => {
       if (action !== 'cancel') throw new Error('Customer can only cancel booking');
@@ -173,4 +167,5 @@ export const updateBooking = async (id: any, data: any) => {
 
   return roleActions[role](action); 
 }
+ 
  

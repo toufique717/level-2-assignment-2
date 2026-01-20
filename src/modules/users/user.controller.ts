@@ -96,7 +96,7 @@ const updateuser =  async (req:Request, res:Response) => {
  
   try
   {
-      const result = await userservice.updateuser(name,email,password,phone,role,req.params.id) ;
+      const result = await userservice.updateuser(name,email,password,phone,role,req.params.userId) ;
       
       if(result.rows.length ===0)
       {
@@ -133,7 +133,7 @@ const deleteuser = async (req:Request, res:Response) => {
  
   try
   {
-      const result = await userservice.deleteuser(req.params.id);
+      const result = await userservice.deleteuser(req.params.userId);
       
       if(result.rowCount ===0)
       {

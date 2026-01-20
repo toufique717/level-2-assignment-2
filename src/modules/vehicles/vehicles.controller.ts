@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { pool } from "../../config/db";
 import { vehicleservice } from "./vehicles.service";
 
 const createvehicles = async (req:Request, res:Response) => {
@@ -37,7 +36,7 @@ const getvehicles = async (req:Request, res:Response) => {
        res.status(201).json
       ({
         success:true,
-        message:"User found  successfully",
+        message:"Vehicles retrieved successfully",
         data: result.rows
       })
        
@@ -57,23 +56,24 @@ const getsinglevehicles = async (req:Request, res:Response) => {
  
   try
   {
-      const result = await vehicleservice.getsinglevehicles(req.params.id);
+       
+      const result = await vehicleservice.getsinglevehicles(req.params.vehicleId);
       
       if(result.rows.length ===0)
       {
         res.status(404).json
       ({
         success:false,
-        message: "Users Not Found"
+        message: "Vehicles Not Found"
       })
       }
         
       else
       {
-        res.status(404).json
+        res.status(201).json
       ({
         success:true,
-        message: "Users Fetched Successfully",
+        message: "Vehicle retrieved successfully",
         data: result.rows[0]
       })
       }
@@ -96,7 +96,7 @@ const updatevehicles = async (req:Request, res:Response) => {
  
   try
   {
-      const result = await vehicleservice.updatevehicles(vehicle_name,type,registration_number,daily_rent_price,availability_status,req.params.id)  ;
+      const result = await vehicleservice.updatevehicles(vehicle_name,type,registration_number,daily_rent_price,availability_status,req.params.vehicleId)  ;
       
       if(result.rows.length ===0)
       {
@@ -133,7 +133,7 @@ const deletevehicles =  async (req:Request, res:Response) => {
  
   try
   {
-      const result = await vehicleservice.deletevehicles(req.params.id) ;
+      const result = await vehicleservice.deletevehicles(req.params.vehicleId) ;
       
       if(result.rowCount ===0)
       {
@@ -146,7 +146,7 @@ const deletevehicles =  async (req:Request, res:Response) => {
         
       else
       {
-        res.status(404).json
+        res.status(201).json
       ({
         success:true,
         message: "Vehicles deleted Successfully",
@@ -165,8 +165,6 @@ const deletevehicles =  async (req:Request, res:Response) => {
   }
 
 }
-
-
 
 export const vehiclestrollers = 
 { 

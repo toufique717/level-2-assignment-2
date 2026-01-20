@@ -9,30 +9,18 @@ import { vehiclesRoutes } from "./modules/vehicles/vehicles.routes";
  import bookingRoutes from './modules/bookings/booking.routes';
 import { authRoutes } from "./modules/auth/auth.routes";
 const app = express();
-//const port = config.port;
  
 app.use(express.json());
  
 mydb();
 
-//logger middlewere
 app.get('/',logger, (req:Request, res:Response) => {
   res.send('Hello World!,My name is Toufique Hossain')
 })
- 
-//users post
 app.use("/api/v1",userRoutes) 
- //......................vehicles--crud..........................
 app.use("/api/v1/vehicles",vehiclesRoutes)  
+   app.use("/api/v1/bookings",bookingRoutes);
  
-//....................Booking Crud ..............................
-
- app.use("/api/v1/bookings",bookingRoutes);
-
- //aut routes
-
-// app.use("/auth",authRoutes)
-
 app.use("/api/v1/auth", authRoutes)
   
 app.use((req,res) =>
